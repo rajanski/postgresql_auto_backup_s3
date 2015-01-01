@@ -1,7 +1,9 @@
 postgresql_auto_backup_s3
 =========================
 
-Configurable backup scripts to automate postgresql backups and push to s3 via stdin, plus rotation logic
+Configurable backup scripts to automate postgresql backups and push to s3 via stdin, plus rotation logic.
+
+Contributors welcome!
 
 Original code from https://wiki.postgresql.org/wiki/Automated_Backup_on_Linux.
 
