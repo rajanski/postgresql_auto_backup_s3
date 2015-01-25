@@ -60,7 +60,7 @@ fi;
 function perform_backups()
 {
 	SUFFIX=$1
-	FINAL_BACKUP_DIR=$BACKUP_DIR"`date +\%Y-\%m-\%d`$SUFFIX-"
+	FINAL_BACKUP_DIR=$BACKUP_DIR"`date +\%Y\%m\%d`$SUFFIX/"
  
 	#echo "Making backup directory in $FINAL_BACKUP_DIR"
  
@@ -173,7 +173,13 @@ fi
  
 # DAILY BACKUPS
  
-# Delete daily backups 7 days old or more
-find $BACKUP_DIR -maxdepth 1 -mtime +$DAYS_TO_KEEP -name "*-daily" -exec rm -rf '{}' ';'
- 
+# Delete daily backups $DAYS_TO_KEEP days old or more
+#find $BACKUP_DIR -maxdepth 1 -mtime +$DAYS_TO_KEEP -name "*-daily" -exec rm -rf '{}' ';'
+
+##CAUTION! do not use this YET!
+deldate=`date +"%Y%m%d" --date="$DAYS_TO_KEEP days ago"`
+#s3cmd ls $BACKUP_DIR | awk '{if ($1:0:10 == "$deldate") system("s3cmd info " $4)}'
+s3cmd ls $BACKUP_DIR | awk -v bucket="$BACKUP_DIR" -v deldate="$deldate" '{gsub(bucket,"",$4);if (substr($4,0,8)<=deldate) system("s3cmd info " $4)}' 
+#replace s3cmd info by s3cmd del
+
 perform_backups "-daily"
