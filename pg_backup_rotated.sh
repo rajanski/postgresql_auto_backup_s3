@@ -179,7 +179,7 @@ fi
 ##CAUTION! do not use this YET!
 deldate=`date +"%Y%m%d" --date="$DAYS_TO_KEEP days ago"`
 #s3cmd ls $BACKUP_DIR | awk '{if ($1:0:10 == "$deldate") system("s3cmd info " $4)}'
-s3cmd ls $BACKUP_DIR | awk -v bucket="$BACKUP_DIR" -v deldate="$deldate" '{gsub(bucket,"",$4);if (substr($4,0,8)<=deldate) system("s3cmd info " $4)}' 
+s3cmd ls $BACKUP_DIR | awk -v bucket="$BACKUP_DIR" -v deldate="$deldate" '{gsub(bucket,"",$4);if (substr($4,0,9)<=deldate) system("s3cmd info " bucket$4)}' 
 #replace s3cmd info by s3cmd del
 
 perform_backups "-daily"
