@@ -176,9 +176,12 @@ fi
 # Delete daily backups $DAYS_TO_KEEP days old or more
 #find $BACKUP_DIR -maxdepth 1 -mtime +$DAYS_TO_KEEP -name "*-daily" -exec rm -rf '{}' ';'
 
-##CAUTION! do not use this YET!
+#set $deldate to date minus $DAYS_TO_KEEP
 deldate=`date +"%Y%m%d" --date="$DAYS_TO_KEEP days ago"`
-#s3cmd ls $BACKUP_DIR | awk '{if ($1:0:10 == "$deldate") system("s3cmd info " $4)}'
+
+#remove leading bucket name from s3 object displayed by "s3cmd ls $bucketname"
+#compare first 8 chars of s3 object name (minus bucket name) with $deldate, 
+#if first 8 chars of s3 object name::int <= $deldate then delete those s3 objects
 s3cmd ls $BACKUP_DIR | awk -v bucket="$BACKUP_DIR" -v deldate="$deldate" '{gsub(bucket,"",$4);if (substr($4,0,9)<=deldate) system("s3cmd info " bucket$4)}' 
 #replace s3cmd info by s3cmd del
 
