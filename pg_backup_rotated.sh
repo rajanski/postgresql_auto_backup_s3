@@ -62,12 +62,12 @@ function perform_backups()
 	SUFFIX=$1
 	FINAL_BACKUP_DIR=$BACKUP_DIR"`date +\%Y-\%m-\%d`$SUFFIX/"
  
-	echo "Making backup directory in $FINAL_BACKUP_DIR"
+	#echo "Making backup directory in $FINAL_BACKUP_DIR"
  
-	if ! mkdir -p $FINAL_BACKUP_DIR; then
-		echo "Cannot create backup directory in $FINAL_BACKUP_DIR. Go and fix it!" 1>&2
-		exit 1;
-	fi;
+	#if ! mkdir -p $FINAL_BACKUP_DIR; then
+	#	echo "Cannot create backup directory in $FINAL_BACKUP_DIR. Go and fix it!" 1>&2
+	#	exit 1;
+	#fi;
  
  
 	###########################
@@ -91,11 +91,11 @@ function perform_backups()
 	for DATABASE in $SCHEMA_ONLY_DB_LIST
 	do
 	        echo "Schema-only backup of $DATABASE"
- 
-	        if ! pg_dump -Fp -s -h "$HOSTNAME" -U "$USERNAME" "$DATABASE" | gzip > $FINAL_BACKUP_DIR"$DATABASE"_SCHEMA.sql.gz.in_progress; then
+ 		
+	        if ! pg_dump -Fp -s -h "$HOSTNAME" -U "$USERNAME" "$DATABASE" | gzip --stdout | s3cmd --reduced-redundancy put - $FINAL_BACKUP_DIR"$DATABASE"_SCHEMA.sql.gz.in_progress --no-encrypt; then
 	                echo "[!!ERROR!!] Failed to backup database schema of $DATABASE" 1>&2
 	        else
-	                mv $FINAL_BACKUP_DIR"$DATABASE"_SCHEMA.sql.gz.in_progress $FINAL_BACKUP_DIR"$DATABASE"_SCHEMA.sql.gz
+	                s3cmd mv $FINAL_BACKUP_DIR"$DATABASE"_SCHEMA.sql.gz.in_progress $FINAL_BACKUP_DIR"$DATABASE"_SCHEMA.sql.gz
 	        fi
 	done
  
@@ -119,23 +119,22 @@ function perform_backups()
 		if [ $ENABLE_PLAIN_BACKUPS = "yes" ]
 		then
 			echo "Plain backup of $DATABASE"
- 
-			if ! pg_dump -Fp -h "$HOSTNAME" -U "$USERNAME" "$DATABASE" | gzip > $FINAL_BACKUP_DIR"$DATABASE".sql.gz.in_progress; then
-				echo "[!!ERROR!!] Failed to produce plain backup database $DATABASE" 1>&2
-			else
-				mv $FINAL_BACKUP_DIR"$DATABASE".sql.gz.in_progress $FINAL_BACKUP_DIR"$DATABASE".sql.gz
-			fi
+ 			
+			if ! pg_dump -Fp -h "$HOSTNAME" -U "$USERNAME" "$DATABASE" | gzip --stdout | s3cmd --reduced-redundancy put - $FINAL_BACKUP_DIR"$DATABASE".sql.gz.in_progress --no-encrypt; then
+	                	echo "[!!ERROR!!] Failed to produce plain backup database schema of $DATABASE" 1>&2
+	        	else
+	                	s3cmd mv $FINAL_BACKUP_DIR"$DATABASE".sql.gz.in_progress $FINAL_BACKUP_DIR"$DATABASE".sql.gz
+	        	fi
 		fi
  
 		if [ $ENABLE_CUSTOM_BACKUPS = "yes" ]
 		then
 			echo "Custom backup of $DATABASE"
- 
-			if ! pg_dump -Fc -h "$HOSTNAME" -U "$USERNAME" "$DATABASE" -f $FINAL_BACKUP_DIR"$DATABASE".custom.in_progress; then
-				echo "[!!ERROR!!] Failed to produce custom backup database $DATABASE"
-			else
-				mv $FINAL_BACKUP_DIR"$DATABASE".custom.in_progress $FINAL_BACKUP_DIR"$DATABASE".custom
-			fi
+ 			if ! pg_dump -Fc -h "$HOSTNAME" -U "$USERNAME" "$DATABASE" | gzip --stdout | s3cmd --reduced-redundancy put - $FINAL_BACKUP_DIR"$DATABASE".custom.in_progress --no-encrypt; then
+	                	echo "[!!ERROR!!] Failed to produce custom backup database schema of $DATABASE" 1>&2
+	        	else
+	                	s3cmd mv $FINAL_BACKUP_DIR"$DATABASE".custom.in_progress $FINAL_BACKUP_DIR"$DATABASE".custom
+	        	fi
 		fi
  
 	done
